@@ -9,6 +9,7 @@ from .service import (
     act_on_letter,
     get_letter,
     get_letter_history,
+    resend_letter,
 )
 
 __all__ = [
@@ -20,4 +21,5 @@ __all__ = [
     "act_on_letter",
     "get_letter",
     "get_letter_history",
+    "resend_letter",
 ]
