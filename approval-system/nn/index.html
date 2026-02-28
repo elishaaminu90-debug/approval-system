@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduExit • Student Management System</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <!-- Animated background elements -->
+  <div class="bg-animation">
+    <div class="ball ball-1"></div>
+    <div class="ball ball-2"></div>
+    <div class="ball ball-3"></div>
+  </div>
+
+  <!-- LOGIN PAGE -->
+  <div class="container glass-effect" id="loginPage">
+    <div class="logo-container">
+      <i class="fas fa-graduation-cap logo-icon"></i>
+      <h1 class="system-title">EduExit<span class="title-dot">.</span></h1>
+    </div>
+    <p class="system-subtitle">Student Exit Request System</p>
+
+    <div class="error-message" id="studentError">
+      <i class="fas fa-exclamation-circle"></i>
+      <span></span>
+    </div>
+
+    <div class="input-group">
+      <i class="fas fa-user input-icon"></i>
+      <input type="text" id="name" placeholder="Full Name" autocomplete="off">
+    </div>
+
+    <div class="input-group">
+      <i class="fas fa-id-card input-icon"></i>
+      <input type="text" id="matric" placeholder="Matric Number" autocomplete="off">
+    </div>
+
+    <div class="input-group">
+      <i class="fas fa-lock input-icon"></i>
+      <input type="password" id="studentPass" placeholder="Password">
+    </div>
+
+    <button onclick="studentLogin()" class="btn btn-primary btn-block">
+      <i class="fas fa-sign-in-alt"></i> Login
+      <div class="btn-loader"></div>
+    </button>
+
+    <div class="admin-link" onclick="showAdminLogin()">
+      <i class="fas fa-user-shield"></i> Admin Login
+    </div>
+  </div>
+
+  <!-- ADMIN LOGIN PAGE -->
+  <div class="container glass-effect hidden" id="adminLoginPage">
+    <div class="logo-container">
+      <i class="fas fa-crown logo-icon"></i>
+      <h1 class="system-title">Admin<span class="title-dot">.</span></h1>
+    </div>
+
+    <div class="error-message" id="adminError">
+      <i class="fas fa-exclamation-circle"></i>
+      <span></span>
+    </div>
+
+    <div class="input-group">
+      <i class="fas fa-lock input-icon"></i>
+      <input type="password" id="adminPass" placeholder="Admin Password">
+    </div>
+
+    <button onclick="adminLogin()" class="btn btn-primary btn-block">
+      <i class="fas fa-sign-in-alt"></i> Login
+    </button>
+
+    <div class="admin-link" onclick="showStudentLogin()">
+      <i class="fas fa-arrow-left"></i> Back to Student Login
+    </div>
+  </div>
+
+  <!-- STUDENT PANEL -->
+  <div class="container glass-effect hidden" id="studentPanel">
+    <div class="welcome-header">
+      <div class="user-avatar">
+        <i class="fas fa-user-graduate"></i>
+      </div>
+      <div class="welcome-text">
+        <h2>Welcome back, <span id="studentName"></span>!</h2>
+        <p class="matric-display"><i class="fas fa-id-card"></i> <span id="studentMatric"></span></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">
+        <i class="fas fa-pen"></i> Exit Request Form
+      </h3>
+
+      <div class="textarea-wrapper">
+        <textarea id="reason" placeholder="Please explain your reason for leaving campus..."></textarea>
+        <div class="char-counter">
+          <span id="wordCount">0</span> words
+          <i class="fas fa-info-circle" title="Minimum 10 characters required (max recommended 1000 words)"></i>
+        </div>
+      </div>
+
+      <button onclick="sendRequest()" class="btn btn-accent btn-block" id="sendBtn">
+        <i class="fas fa-paper-plane"></i> Send Request
+      </button>
+    </div>
+
+    <div class="card" id="statusContainer">
+      <h3 class="card-title">
+        <i class="fas fa-clock"></i> Request Status
+      </h3>
+
+      <div class="status-badge" id="status">No request yet</div>
+
+      <div id="requestDetails" class="request-details hidden">
+        <div class="detail-item">
+          <i class="fas fa-comment"></i>
+          <span id="requestReasonText"></span>
+        </div>
+        <div class="detail-item">
+          <i class="fas fa-clock"></i>
+          <span id="requestTimeText"></span>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-secondary btn-block logout-btn" onclick="logout()">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </button>
+  </div>
+
+  <!-- ADMIN PANEL -->
+  <div class="container glass-effect admin-container hidden" id="adminPanel">
+    <div class="admin-header">
+      <div class="admin-title">
+        <i class="fas fa-crown admin-crown"></i>
+        <h2>Admin Dashboard</h2>
+      </div>
+      <div class="admin-badge">Master</div>
+    </div>
+
+    <!-- Admin Tabs -->
+    <div class="admin-tabs">
+      <button class="tab-btn active" onclick="switchAdminTab('requests')">
+        <i class="fas fa-inbox"></i>
+        <span>Requests</span>
+        <span class="tab-badge" id="pendingBadge">0</span>
+      </button>
+      <button class="tab-btn" onclick="switchAdminTab('students')">
+        <i class="fas fa-users"></i>
+        <span>Students</span>
+        <span class="tab-badge" id="studentsBadge">0</span>
+      </button>
+      <button class="tab-btn" onclick="switchAdminTab('settings')">
+        <i class="fas fa-cog"></i>
+        <span>Settings</span>
+      </button>
+    </div>
+
+    <!-- Requests Tab -->
+    <div id="requestsTab" class="tab-content fade-in">
+      <div class="request-card">
+        <div class="request-header">
+          <i class="fas fa-bell"></i>
+          <h3>Pending Requests</h3>
+        </div>
+
+        <div id="pendingRequest" class="pending-request hidden">
+          <div class="student-info-card">
+            <div class="info-row">
+              <i class="fas fa-user"></i>
+              <span><strong>From:</strong> <span id="requestStudent"></span></span>
+            </div>
+            <div class="info-row">
+              <i class="fas fa-id-card"></i>
+              <span><strong>Matric:</strong> <span id="requestMatric"></span></span>
+            </div>
+            <div class="info-row">
+              <i class="fas fa-comment"></i>
+              <span><strong>Reason:</strong> <span id="requestReason"></span></span>
+            </div>
+            <div class="info-row">
+              <i class="fas fa-clock"></i>
+              <span><strong>Time:</strong> <span id="requestTime"></span></span>
+            </div>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn btn-success" onclick="acceptRequest()" id="acceptBtn">
+              <i class="fas fa-check"></i> Accept
+            </button>
+            <button class="btn btn-danger" onclick="declineRequest()" id="declineBtn">
+              <i class="fas fa-times"></i> Decline
+            </button>
+          </div>
+          <div class="comment-section">
+            <p class="small-note">Comments/recommendations may be added by any non-student user regardless of the
+              current approver role.</p>
+            <textarea id="adminComment" placeholder="Add comment (optional)" rows="2"></textarea>
+            <textarea id="adminRecommendation" placeholder="Add recommendation (optional)" rows="2"></textarea>
+            <button class="btn btn-secondary" onclick="addComment()">
+              <i class="fas fa-comment"></i> Add Comment
+            </button>
+          </div>
+        </div>
+
+        <div id="noPendingRequest" class="empty-state">
+          <i class="fas fa-check-circle"></i>
+          <p>No pending requests</p>
+        </div>
+      </div>
+
+      <div class="history-card">
+        <div class="history-header">
+          <i class="fas fa-history"></i>
+          <h3>Recent Activity</h3>
+        </div>
+        <div id="requestLog" class="log-container"></div>
+      </div>
+    </div>
+
+    <!-- Students Tab -->
+    <div id="studentsTab" class="tab-content fade-in hidden">
+      <div class="action-card">
+        <div class="action-header">
+          <i class="fas fa-user-plus"></i>
+          <h3>Add New Student</h3>
+        </div>
+
+        <div class="form-grid">
+          <div class="input-group">
+            <i class="fas fa-user input-icon"></i>
+            <input type="text" id="newStudentName" placeholder="Full Name">
+          </div>
+
+          <div class="input-group">
+            <i class="fas fa-id-card input-icon"></i>
+            <input type="text" id="newStudentMatric" placeholder="Matric Number">
+          </div>
+
+          <div class="input-group">
+            <i class="fas fa-lock input-icon"></i>
+            <input type="password" id="newStudentPassword" placeholder="Password (optional)">
+          </div>
+        </div>
+
+        <button onclick="addStudent()" class="btn btn-primary btn-block">
+          <i class="fas fa-plus"></i> Add Student
+        </button>
+      </div>
+
+      <div class="action-card">
+        <div class="action-header">
+          <i class="fas fa-bolt"></i>
+          <h3>Quick Actions</h3>
+        </div>
+
+        <div class="quick-actions-grid">
+          <button onclick="generateBulkMatric()" class="btn btn-secondary">
+            <i class="fas fa-random"></i> Bulk Generate
+          </button>
+          <button onclick="resetAllPasswords()" class="btn btn-warning">
+            <i class="fas fa-key"></i> Reset Passwords
+          </button>
+          <button onclick="exportData()" class="btn btn-info">
+            <i class="fas fa-download"></i> Export Data
+          </button>
+          <button onclick="importData()" class="btn btn-info">
+            <i class="fas fa-upload"></i> Import Data
+          </button>
+        </div>
+      </div>
+
+      <div class="students-card">
+        <div class="students-header">
+          <i class="fas fa-users"></i>
+          <h3>Registered Students</h3>
+          <span class="student-count" id="studentCount">0</span>
+        </div>
+
+        <div class="student-list-header">
+          <span>Name</span>
+          <span>Matric</span>
+          <span>Actions</span>
+        </div>
+
+        <div id="studentListContainer" class="student-list-container"></div>
+      </div>
+    </div>
+
+    <!-- Settings Tab -->
+    <div id="settingsTab" class="tab-content fade-in hidden">
+      <div class="settings-card">
+        <div class="settings-header">
+          <i class="fas fa-shield-alt"></i>
+          <h3>Security</h3>
+        </div>
+
+        <div class="setting-item">
+          <label>Admin Password</label>
+          <div class="setting-control">
+            <input type="password" id="newAdminPass" placeholder="New admin password">
+            <button onclick="changeAdminPassword()" class="btn btn-primary">Update</button>
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <label>Default Student Password</label>
+          <div class="setting-control">
+            <input type="text" id="defaultPassword" value="student123">
+            <button onclick="updateDefaultPassword()" class="btn btn-primary">Set</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-header">
+          <i class="fas fa-calculator"></i>
+          <h3>Matric Number Generator</h3>
+        </div>
+
+        <div class="setting-item">
+          <label>Format</label>
+          <select id="matricFormat" class="form-select">
+            <option value="CS{year}{number}">Computer Science (CS2024001)</option>
+            <option value="ENG{year}{number}">Engineering (ENG2024001)</option>
+            <option value="BUS{year}{number}">Business (BUS2024001)</option>
+            <option value="SCI{year}{number}">Science (SCI2024001)</option>
+            <option value="ART{year}{number}">Arts (ART2024001)</option>
+          </select>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-item">
+            <label>Year</label>
+            <input type="number" id="currentYear" value="2024" min="2000" max="2030">
+          </div>
+
+          <div class="setting-item">
+            <label>Start #</label>
+            <input type="number" id="startNumber" value="1" min="1">
+          </div>
+
+          <div class="setting-item">
+            <label>Digits</label>
+            <input type="number" id="numberDigits" value="3" min="2" max="4">
+          </div>
+        </div>
+
+        <button onclick="updateMatricSettings()" class="btn btn-primary btn-block">
+          <i class="fas fa-save"></i> Save Settings
+        </button>
+      </div>
+
+      <div class="settings-card danger-zone">
+        <div class="settings-header">
+          <i class="fas fa-exclamation-triangle"></i>
+          <h3>Danger Zone</h3>
+        </div>
+
+        <div class="danger-actions">
+          <button onclick="clearAllRequests()" class="btn btn-warning">
+            <i class="fas fa-trash"></i> Clear All Requests
+          </button>
+          <button onclick="resetSystem()" class="btn btn-danger">
+            <i class="fas fa-skull-crosswalk"></i> Reset System
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-secondary btn-block logout-btn" onclick="logout()">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </button>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="script.js?v=2"></script>
+</body>
+
+</html>

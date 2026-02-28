@@ -1,0 +1,27 @@
+# Virtual Environment
+env/
+venv/
+.venv/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Database
+approval.db
+*.db
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Streamlit
+.streamlit/
