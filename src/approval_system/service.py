@@ -13,7 +13,7 @@ DEFAULT_ROUTE = [
     "Vice Chancellor",
 ]
 
-VALID_ROLES = set(DEFAULT_ROUTE + ["Faculty Association"])
+VALID_ROLES = set(DEFAULT_ROUTE + ["Faculty Association", "Student", "SRC", "Staff"])
 
 
 def init_db(path: str) -> None:
@@ -60,9 +60,9 @@ def send_letter(
         conn.close()
         raise ValueError(f"Sender with id {sender_id} not found")
     
-    if sender["role"] != "Faculty Association":
+    if sender["role"] not in VALID_ROLES:
         conn.close()
-        raise ValueError("Only Faculty Association members can send letters")
+        raise ValueError(f"Invalid sender role: {sender['role']}")
     
     route = route or DEFAULT_ROUTE
     now = datetime.utcnow().isoformat()
