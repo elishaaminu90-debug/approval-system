@@ -7,6 +7,7 @@ from .service import (
     list_pending_for_role,
     act_on_letter,
     get_letter,
+    resend_letter,
 )
 
 __all__ = [
@@ -16,4 +17,5 @@ __all__ = [
     "list_pending_for_role",
     "act_on_letter",
     "get_letter",
+    "resend_letter",
 ]

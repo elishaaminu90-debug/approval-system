@@ -115,6 +115,44 @@ def delete_user(user_id: int):
         return {"status": "deleted", "user_id": user_id}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+@@
+ @app.post("/api/act")
+def post_act(payload: ActIn):
+@@
+     try:
+         result = act_on_letter(
+             DB_PATH,
+             payload.letter_id,
+             actor_id,
+             payload.action,
+             payload.comments,
+             payload.recommendations,
+         )
+         return result
+     except Exception as e:
+         raise HTTPException(status_code=400, detail=str(e))
++
++
++class ResendIn(BaseModel):
++    letter_id: int
++    sender_id: int
++    title: str
++    body: str
++
++
++@app.post("/api/resend")
+def post_resend(payload: ResendIn):
+    try:
+        resend_letter(DB_PATH, payload.letter_id, payload.sender_id, payload.title, payload.body)
+        return {"status": "resent", "letter_id": payload.letter_id}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
++
++
++@app.get("/api/notifications")
+def get_notifications():
+    # stub returns fixed message; in real app would query notification table or send email
+    return [{"message": "No new notifications"}]
 
 
 @app.put("/api/users/{user_id}/password")

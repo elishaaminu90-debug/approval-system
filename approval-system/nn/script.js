@@ -435,3 +435,143 @@ document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click
     // if students tab selected, refresh list
     if (btn.textContent && btn.textContent.includes('Students')) setTimeout(loadStudents, 200);
 }));
+
+// Quick action implementations (safe defaults)
+async function generateBulkMatric() {
+    const count = Number(prompt('How many students to generate?', '10')) || 0;
+    if (count <= 0) return toast('Cancelled', 'info');
+    if (!confirm(`Generate ${count} students?`)) return;
+    for (let i = 1; i <= count; i++) {
+        try {
+            const name = `Auto Student ${Date.now().toString().slice(-4)}-${i}`;
+            await fetch(`${API_BASE}/users`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, role: 'Student' })
+            });
+        } catch (e) {
+            console.error('generateBulkMatric error', e);
+        }
+    }
+    toast(`Generated ${count} students`, 'success');
+    loadStudents();
+}
+
+async function resetAllPasswords() {
+    if (!confirm('Reset password for ALL users to the default?')) return;
+    try {
+        const users = await fetch(`${API_BASE}/users`).then(r => r.json());
+        for (const u of users) {
+            await fetch(`${API_BASE}/users/${u.id}/password`, { method: 'PUT' });
+        }
+        toast('Passwords reset for all users', 'success');
+    } catch (e) {
+        console.error('resetAllPasswords error', e);
+        toast('Failed to reset all passwords', 'error');
+    }
+}
+
+async function exportData() {
+    try {
+        const users = await fetch(`${API_BASE}/users`).then(r => r.json());
+        const csv = ['id,name,role'].concat(users.map(u => `${u.id},"${u.name.replace(/"/g, '""')}",${u.role}`)).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'users_export.csv';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        toast('Exported users.csv', 'success');
+    } catch (e) {
+        console.error('exportData error', e);
+        toast('Export failed', 'error');
+    }
+}
+
+async function importData() {
+    const text = prompt('Paste JSON array of users to import (name, role)', '[]');
+    if (!text) return;
+    try {
+        const arr = JSON.parse(text);
+        if (!Array.isArray(arr)) throw new Error('Not an array');
+        for (const item of arr) {
+            if (!item.name || !item.role) continue;
+            await fetch(`${API_BASE}/users`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: item.name, role: item.role })
+            });
+        }
+        toast('Import complete', 'success');
+        loadStudents();
+    } catch (e) {
+        console.error('importData error', e);
+        toast('Import failed: ' + e.message, 'error');
+    }
+}
+
+// Expose safe globals for onclick handlers (ensure availability even if modules/caching change)
+window.generateBulkMatric = async function () {
+    const count = Number(prompt('How many students to generate?', '10')) || 0;
+    if (count <= 0) return toast('Cancelled', 'info');
+    if (!confirm(`Generate ${count} students?`)) return;
+    for (let i = 1; i <= count; i++) {
+        try {
+            const name = `Auto Student ${Date.now().toString().slice(-4)}-${i}`;
+            await fetch(`${API_BASE}/users`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, role: 'Student' })
+            });
+        } catch (e) { console.error('generateBulkMatric error', e); }
+    }
+    toast(`Generated ${count} students`, 'success');
+    loadStudents();
+};
+
+window.resetAllPasswords = async function () {
+    if (!confirm('Reset password for ALL users to the default?')) return;
+    try {
+        const users = await fetch(`${API_BASE}/users`).then(r => r.json());
+        for (const u of users) {
+            await fetch(`${API_BASE}/users/${u.id}/password`, { method: 'PUT' });
+        }
+        toast('Passwords reset for all users', 'success');
+    } catch (e) { console.error('resetAllPasswords error', e); toast('Failed to reset all passwords', 'error'); }
+};
+
+window.exportData = async function () {
+    try {
+        const users = await fetch(`${API_BASE}/users`).then(r => r.json());
+        const csv = ['id,name,role'].concat(users.map(u => `${u.id},"${u.name.replace(/"/g, '""')}",${u.role}`)).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = 'users_export.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+        toast('Exported users.csv', 'success');
+    } catch (e) { console.error('exportData error', e); toast('Export failed', 'error'); }
+};
+
+window.importData = async function () {
+    const text = prompt('Paste JSON array of users to import (name, role)', '[]');
+    if (!text) return;
+    try {
+        const arr = JSON.parse(text);
+        if (!Array.isArray(arr)) throw new Error('Not an array');
+        for (const item of arr) {
+            if (!item.name || !item.role) continue;
+            await fetch(`${API_BASE}/users`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: item.name, role: item.role }) });
+        }
+        toast('Import complete', 'success');
+        loadStudents();
+    } catch (e) { console.error('importData error', e); toast('Import failed: ' + e.message, 'error'); }
+};
+
+// clearAllRequests is a safe UI-only stub: clears pending request UI and reloads lists
+window.clearAllRequests = function () {
+    if (!confirm('Clear pending requests view (this will NOT delete server data). Continue?')) return;
+    // hide any pending UI elements and refresh overviews
+    try { document.getElementById('pendingRequest')?.classList.add('hidden'); } catch { };
+    loadAdminOverview?.();
+    loadPendingRequest?.();
+    toast('Cleared pending request view', 'success');
+};

@@ -1,5 +1,8 @@
 import os
+import sys
 import tempfile
+# ensure package path is available
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.approval_system import init_db, create_user, send_letter, list_pending_for_role, act_on_letter, get_letter
 
 
@@ -37,6 +40,20 @@ def test_full_flow():
         # final letter should be approved
         final = get_letter(path, lid)
         assert final["letter"]["status"] == "approved"
+
+        # now test rejection and resend path
+        # send another letter to reject
+        lid2 = send_letter(path, sender, "Test2", "Please review")
+        # first approver rejects
+        out2 = act_on_letter(path, lid2, users[roles[0]], "reject", comments="not ok")
+        assert out2["letter"]["status"] == "rejected"
+        # attempt resend with updated body
+        from src.approval_system import resend_letter
+        resend_letter(path, lid2, sender, "Test2-upd", "Updated body")
+        # after resending, letter should be pending again
+        updated = get_letter(path, lid2)
+        assert updated["letter"]["status"] == "pending"
+        assert updated["letter"]["title"] == "Test2-upd"
     finally:
         try:
             os.remove(path)

@@ -63,6 +63,12 @@ if users:
     
     st.sidebar.success(f"Logged in as: **{current_user['name']}**")
     st.sidebar.info(f"Role: **{current_user['role']}**")
+    # notify writer of any rejected letters
+    if current_user['id']:
+        all_for_user = list_all_letters(DB_PATH, current_user['id'])
+        rejected = [l for l in all_for_user if l['status'] == 'rejected']
+        if rejected:
+            st.sidebar.warning(f"You have {len(rejected)} rejected letter(s) - please edit & resend.")
 else:
     st.sidebar.warning("No users found. Please create users first.")
     current_user_id = None
@@ -264,6 +270,20 @@ elif page == "📋 All Letters":
                 # View details button
                 if st.button(f"View Full Details", key=f"view_{letter['id']}"):
                     st.session_state['view_letter'] = letter['id']
+                # allow sender to edit & resend if rejected
+                if current_user and letter['sender_id'] == current_user_id and letter['status'] == 'rejected':
+                    with st.form(f"resend_form_{letter['id']}"):
+                        new_title = st.text_input("Title", value=letter['title'], key=f"rtitle_{letter['id']}")
+                        new_body = st.text_area("Body", value=letter.get('body',''), key=f"rbody_{letter['id']}")
+                        submitted2 = st.form_submit_button("✏️ Edit & Resend", type="secondary")
+                        if submitted2:
+                            try:
+                                # call service directly
+                                resend_letter(DB_PATH, letter['id'], current_user_id, new_title, new_body)
+                                st.success("Letter resent to approval chain")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Resend failed: {e}")
         
         # Show selected letter details
         if 'view_letter' in st.session_state:

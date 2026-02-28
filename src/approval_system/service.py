@@ -283,6 +283,8 @@ def act_on_letter(
             "UPDATE letters SET status='rejected', current_step = ? WHERE id=?", 
             (current_step, letter_id)
         )
+        # Notify sender that their letter was rejected
+        notify_sender(db_path, letter_id, full_comments)
     else:
         conn.close()
         raise ValueError("Unknown action. Use 'approve' or 'reject'")
@@ -293,6 +295,44 @@ def act_on_letter(
     result = get_letter(db_path, letter_id)
     conn.close()
     return result
+
+
+def notify_sender(db_path: str, letter_id: int, reason: str) -> None:
+    """Send a notification to the original sender about rejection.
+    This is currently a stub; in a real system it might send an email.
+    """
+    conn = get_conn(db_path)
+    cur = conn.cursor()
+    cur.execute("SELECT sender_id FROM letters WHERE id = ?", (letter_id,))
+    row = cur.fetchone()
+    if row:
+        sender_id = row["sender_id"]
+        print(f"Notification: letter {letter_id} rejected; notifying user {sender_id}. Reason: {reason}")
+    conn.close()
+
+
+def resend_letter(db_path: str, letter_id: int, sender_id: int, title: str, body: str) -> None:
+    """Allow sender to update content and reset letter for approval.
+    Only permitted if the sender_id matches and letter is rejected.
+    This resets all steps to pending and status to pending.
+    """
+    conn = get_conn(db_path)
+    cur = conn.cursor()
+    cur.execute("SELECT sender_id, status FROM letters WHERE id = ?", (letter_id,))
+    row = cur.fetchone()
+    if not row:
+        conn.close()
+        raise ValueError("Letter not found")
+    if row["sender_id"] != sender_id:
+        conn.close()
+        raise ValueError("Not authorized to resend this letter")
+    if row["status"] != "rejected":
+        conn.close()
+        raise ValueError("Only rejected letters can be resent")
+    cur.execute("UPDATE letters SET title = ?, body = ?, status = 'pending', current_step = 0 WHERE id = ?", (title, body, letter_id))
+    cur.execute("UPDATE steps SET status='pending', actor_id=NULL, comments=NULL, acted_at=NULL WHERE letter_id = ?", (letter_id,))
+    conn.commit()
+    conn.close()
 
 
 def get_letter(db_path: str, letter_id: int) -> Dict[str, Any]:
